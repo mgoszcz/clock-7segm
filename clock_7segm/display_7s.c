@@ -51,7 +51,7 @@ void display_time (unsigned int currentTime[]) {
 	LED_CONTROL_PORT |= (1 << HD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HD);  // low
-	_delay_us(100);
+	_delay_us(10);
 	
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[1]];
@@ -59,33 +59,33 @@ void display_time (unsigned int currentTime[]) {
 	LED_CONTROL_PORT |= (1 << HU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HU);  // low
-	_delay_us(100);
+	_delay_us(10);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[2]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << MD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MD);  // low
-	_delay_us(100);
+	_delay_us(10);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[3]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << MU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MU);  // low
-	_delay_us(100);
+	_delay_us(10);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[4]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << SD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SD);  // low
-	_delay_us(100);
+	_delay_us(10);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[5]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << SU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SU);  // low
-	_delay_us(100);
+	_delay_us(10);
 }
