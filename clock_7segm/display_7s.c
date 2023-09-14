@@ -37,21 +37,21 @@ void dimmer(unsigned int brightness) {
 
 void display_time (unsigned int currentTime[]) {
 	// temporary begin
-	unsigned int num = TIME_ON, i=0;
+	//unsigned int num = TIME_ON, i=0;
 	//num = 3000 * (100 / 100);
-	while(num > 0) {
-		int mod  = num % 10;
-		num = num / 10;
-		currentTime[5-i] = mod;
-		i++;
-	}
+// 	while(num > 0) {
+// 		int mod  = num % 10;
+// 		num = num / 10;
+// 		currentTime[5-i] = mod;
+// 		i++;
+// 	}
 	// temporary end
 	LED_DATA_PORT = sevenSegmTable[currentTime[0]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << HD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HD);  // low
-	_delay_us(10);
+	_delay_us(100);
 	
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[1]];
@@ -59,33 +59,33 @@ void display_time (unsigned int currentTime[]) {
 	LED_CONTROL_PORT |= (1 << HU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HU);  // low
-	_delay_us(10);
+	_delay_us(100);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[2]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << MD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MD);  // low
-	_delay_us(10);
+	_delay_us(100);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[3]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << MU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MU);  // low
-	_delay_us(10);
+	_delay_us(100);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[4]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << SD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SD);  // low
-	_delay_us(10);
+	_delay_us(100);
 	
 	LED_DATA_PORT = sevenSegmTable[currentTime[5]];
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << SU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SU);  // low
-	_delay_us(10);
+	_delay_us(100);
 }
