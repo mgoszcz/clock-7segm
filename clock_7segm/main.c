@@ -27,6 +27,7 @@ void my_delay(int miliseconds) {
 
 void getTime(bool ignoreMarker) {
 	char seconds = (currentDisplay[4] << 4) + currentDisplay[5];
+	char oldSeconds = seconds;
 	char minutes = (currentDisplay[2] << 4) + currentDisplay[3];
 	char hours = (currentDisplay[0] << 4) + currentDisplay[1];
 	if (ignoreMarker == true) {
@@ -54,18 +55,14 @@ void getTime(bool ignoreMarker) {
 	currentDisplay[3] = (minutes & 0b00001111);
 	currentDisplay[0] = (hours & 0b00110000)>>4;
 	currentDisplay[1] = (hours & 0b00001111);
-	
-// 	char weekDay = GetWeekDay();
-// 	char MonthDay = GetMonthDay();
-// 	char Month = GetMonth();
-// 	char Year = GetYear();
-	
+	if (oldSeconds != seconds) toggleSeparator();
 }
 
 void getDate(bool ignoreMarker) {
-	char days = (currentDisplay[4] << 4) + currentDisplay[5];
+	int du, mu;
+	char days = (currentDisplay[0] << 4) + currentDisplay[1];
 	char months = (currentDisplay[2] << 4) + currentDisplay[3];
-	char years = (currentDisplay[0] << 4) + currentDisplay[1];
+	char years = (currentDisplay[4] << 4) + currentDisplay[5];
 	if (ignoreMarker == true) {
 		days = GetMonthDay();
 		months = GetMonthDay();
@@ -85,12 +82,16 @@ void getDate(bool ignoreMarker) {
 		marker++;
 		if (marker == 3) marker = 0;
 	}
-	currentDisplay[4] = (days & 0b00110000)>>4;
-	currentDisplay[5] = (days & 0b00001111);
+	du = (days & 0b00001111);
+	mu = (months & 0b00001111);
+	if (du < 10) du += 10;
+	if (mu < 10) mu += 10;
+	currentDisplay[0] = (days & 0b00110000)>>4;
+	currentDisplay[1] = du;
 	currentDisplay[2] = (months & 0b00010000)>>4;
-	currentDisplay[3] = (months & 0b00001111);
-	currentDisplay[0] = (years & 0b11110000)>>4;
-	currentDisplay[1] = (years & 0b00001111);
+	currentDisplay[3] = mu;
+	currentDisplay[4] = (years & 0b11110000)>>4;
+	currentDisplay[5] = (years & 0b00001111);
 }
 
 void getDataToDisplay() {
@@ -114,11 +115,11 @@ void getDataToDisplay() {
 	
 // 	currentDisplay[4] = 0;
 // 	currentDisplay[5] = 0;
-// 	currentDisplay[2] = 0;
-// 	currentDisplay[3] = 0;
-// 	currentDisplay[0] = 0;
-// 	currentDisplay[1] = 0;
-// 	unsigned int num = buttonCounter, i=0;
+// 	currentDisplay[2] = 20;
+// 	currentDisplay[3] = 20;
+// 	currentDisplay[0] = 20;
+// 	currentDisplay[1] = signCounter;
+// 	unsigned int num = signCounter, i=0;
 // 	while(num > 0) {
 //  		int mod  = num % 10;
 //  		num = num / 10;
@@ -133,6 +134,18 @@ void toggleMode() {
 	} else {
 		currentMode++;
 	}
+	switch (currentMode) {
+		case Time:
+			getTime(true);
+			turnOnSeparator();
+			break;
+		case Date:
+			getDate(true);
+			turnOffSeparator();
+			break;
+		case Temp:
+			turnOffSeparator();
+	}
 }
 
 int main(void)
@@ -142,18 +155,17 @@ int main(void)
 	DDRC &= ~(1<<PINC2);
 	PORTC |= (1<<PINC3);
 	PORTC |= (1<<PINC2);
-	DDRC |= (1<<PINC1);
 	init();
 	Initialise_TWI_Master();
 	getTime(true);
 	// PORTC |= (1<<PINC1);
+
 	
 	while(1)
     {
         if (!(PINC & (1<<PINC2))) {
 			buttonCounter++;
 		} else if (buttonCounter > 20) {
-			PORTC |= (1<<PINC1);
 			toggleMode();
 			buttonCounter = 0;
 		}

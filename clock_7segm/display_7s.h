@@ -16,8 +16,14 @@
 #define MU PB3 // minutes units
 #define SD PB4 // seconds decimal
 #define SU PB5 // seconds units
+#define SEPARATOR_PORT PORTC
+#define SEPARATOR_PIN PINC1
+#define SEPARATOR_DIR DDRC
 
 void display_time(unsigned int currentTime[]);
 void my_delay_us(int microseconds);
 void dimmer(unsigned int brightness);
 void init();
+void turnOnSeparator();
+void turnOffSeparator();
+void toggleSeparator();

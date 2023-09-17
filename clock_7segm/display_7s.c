@@ -5,17 +5,17 @@
  *  Author: marci
  */ 
 #include <util/delay.h>
+#include <stdbool.h>
 #include "display_7s.h"
-
-const int sevenSegmTable[10] = {
-	0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
-};
+#include "coder_7seg.h"
 
 unsigned int TIME_OFF, TIME_ON;
+bool separator_on = false;
 
 void init() {
 	TIME_OFF = 2500;
-	TIME_ON = 500;	
+	TIME_ON = 500;
+	SEPARATOR_DIR |= (1<<SEPARATOR_PIN);
 }
 	
 void my_delay_us(int microseconds) {
@@ -35,6 +35,22 @@ void dimmer(unsigned int brightness) {
 	TIME_OFF = 3000 - TIME_ON;
 }
 
+void turnOnSeparator() {
+	separator_on = true;
+}
+
+void turnOffSeparator() {
+	separator_on = false;
+}
+
+void toggleSeparator() {
+	if (separator_on) {
+		turnOffSeparator();
+	} else {
+		turnOnSeparator();
+	}
+}
+
 void display_time (unsigned int currentTime[]) {
 	// temporary begin
 	//unsigned int num = TIME_ON, i=0;
@@ -46,7 +62,7 @@ void display_time (unsigned int currentTime[]) {
 // 		i++;
 // 	}
 	// temporary end
-	LED_DATA_PORT = sevenSegmTable[currentTime[0]];
+	LED_DATA_PORT = codeToDisplay(currentTime[0]);
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << HD); // high
 	my_delay_us(TIME_ON);
@@ -54,38 +70,45 @@ void display_time (unsigned int currentTime[]) {
 	_delay_us(10);
 	
 	
-	LED_DATA_PORT = sevenSegmTable[currentTime[1]];
+	LED_DATA_PORT = codeToDisplay(currentTime[1]);
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << HU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HU);  // low
 	_delay_us(10);
 	
-	LED_DATA_PORT = sevenSegmTable[currentTime[2]];
+	LED_DATA_PORT = codeToDisplay(currentTime[2]);
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << MD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MD);  // low
 	_delay_us(10);
 	
-	LED_DATA_PORT = sevenSegmTable[currentTime[3]];
+	LED_DATA_PORT = codeToDisplay(currentTime[3]);
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << MU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MU);  // low
 	_delay_us(10);
 	
-	LED_DATA_PORT = sevenSegmTable[currentTime[4]];
+	LED_DATA_PORT = codeToDisplay(currentTime[4]);
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << SD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SD);  // low
 	_delay_us(10);
 	
-	LED_DATA_PORT = sevenSegmTable[currentTime[5]];
+	LED_DATA_PORT = codeToDisplay(currentTime[5]);
 	my_delay_us(TIME_OFF);
 	LED_CONTROL_PORT |= (1 << SU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SU);  // low
 	_delay_us(10);
+	
+	if (separator_on) {
+		my_delay_us(TIME_OFF);
+		SEPARATOR_PORT |= (1 << SEPARATOR_PIN); // high
+		my_delay_us(TIME_ON);
+		SEPARATOR_PORT &= ~(1 << SEPARATOR_PIN);  // low
+	}
 }

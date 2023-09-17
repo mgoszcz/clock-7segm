@@ -91,6 +91,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="coder_7seg.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="coder_7seg.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="display_7s.c">
       <SubType>compile</SubType>
     </Compile>
