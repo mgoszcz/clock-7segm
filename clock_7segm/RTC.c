@@ -68,6 +68,14 @@ char GetYear(void) {
 	return RTCRead(YEARS_REGISTER_ADDR);
 }
 
+char GetTempUpper(void) {
+	return RTCRead(TEMP_REGISTER_UPPER_ADDR);
+}
+
+char GetTempLower(void) {
+	return RTCRead(TEMP_REGISTER_LOWER_ADDR);
+}
+
 void SendHours(char value) {
 	RTCWrite(HOURS_REGISTER_ADDR, value);
 }

@@ -14,6 +14,8 @@
 #define MONTHS_REGISTER_ADDR 0x05
 #define YEARS_REGISTER_ADDR 0x06
 #define CONTROL_REGISTER_ADDR 0x0E
+#define TEMP_REGISTER_UPPER_ADDR 0x11
+#define TEMP_REGISTER_LOWER_ADDR 0x12
 #define TWI_targetSlaveAddress 0x68
 
 void Initialise_TWI_Master(void);
@@ -24,6 +26,8 @@ char GetWeekDay(void);
 char GetMonthDay(void);
 char GetMonth(void);
 char GetYear(void);
+char GetTempUpper(void);
+char GetTempLower(void);
 void SendHours(char value);
 void SendMinutes(char value);
 void SendSeconds(char value);

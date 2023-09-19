@@ -60,8 +60,13 @@ void getTime(bool ignoreMarker) {
 
 void getDate(bool ignoreMarker) {
 	int du, mu;
-	char days = (currentDisplay[0] << 4) + currentDisplay[1];
-	char months = (currentDisplay[2] << 4) + currentDisplay[3];
+	du = currentDisplay[1];
+	mu = currentDisplay[3];
+	if (du > 10) du -= 10;
+	if (mu > 10) mu -= 10;
+
+	char days = (currentDisplay[0] << 4) + du;
+	char months = (currentDisplay[2] << 4) + mu;
 	char years = (currentDisplay[4] << 4) + currentDisplay[5];
 	if (ignoreMarker == true) {
 		days = GetMonthDay();
@@ -82,16 +87,42 @@ void getDate(bool ignoreMarker) {
 		marker++;
 		if (marker == 3) marker = 0;
 	}
-	du = (days & 0b00001111);
-	mu = (months & 0b00001111);
-	if (du < 10) du += 10;
-	if (mu < 10) mu += 10;
 	currentDisplay[0] = (days & 0b00110000)>>4;
-	currentDisplay[1] = du;
+	currentDisplay[1] = (days & 0b00001111) + 10;
 	currentDisplay[2] = (months & 0b00010000)>>4;
-	currentDisplay[3] = mu;
+	currentDisplay[3] = (months & 0b00001111) + 10;
 	currentDisplay[4] = (years & 0b11110000)>>4;
 	currentDisplay[5] = (years & 0b00001111);
+}
+
+void getTemp(bool ignoreMarker) {
+	int temp_upper = (int)GetTempUpper();
+	int temp_lower = (int)GetTempLower();
+	bool negative = false;
+	if (temp_upper & 0x80) negative = true;
+	temp_upper &= 0x7f;
+	float temp = ((temp_upper << 8) + temp_lower) / 256.;
+	int whole = (int)temp;
+	float fractional_part = temp - whole;
+	int fractional_int = (int)(fractional_part * 100);
+	if (fractional_int == 0 || fractional_int == 25) fractional_int = 0;
+	if (fractional_int == 50 || fractional_int == 75) fractional_int = 5;
+	if (negative) {
+		currentDisplay[0] = 62;
+	} else {
+		currentDisplay[0] = 20;
+	}
+	int secondDigit = whole % 10;
+	int firstDigit = (whole / 10) % 10;
+	if (firstDigit > 0) {
+		currentDisplay[1] = firstDigit;
+	} else {
+		currentDisplay[1] = 20;	
+	}
+	currentDisplay[2] = secondDigit + 10;
+	currentDisplay[3] = fractional_int;
+	currentDisplay[4] = 60;
+	currentDisplay[5] = 23;
 }
 
 void getDataToDisplay() {
@@ -104,12 +135,7 @@ void getDataToDisplay() {
 			getDate(false);
 			break;
 		case Temp:
-			currentDisplay[4] = 8;
-			currentDisplay[5] = 8;
-			currentDisplay[2] = 8;
-			currentDisplay[3] = 8;
-			currentDisplay[0] = 8;
-			currentDisplay[1] = 8;
+			getTemp(false);
 			break;
 	}
 	
