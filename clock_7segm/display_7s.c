@@ -51,7 +51,7 @@ void toggleSeparator() {
 	}
 }
 
-void display_time (unsigned int currentTime[]) {
+void display_time (unsigned char currentTime[]) {
 	// temporary begin
 	//unsigned int num = TIME_ON, i=0;
 	//num = 3000 * (100 / 100);

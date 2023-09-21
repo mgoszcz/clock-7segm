@@ -12,13 +12,18 @@
 #include "display_7s.h"
 #include "RTC.h"
 
-unsigned int currentDisplay[6] = {0, 0, 0, 0, 0, 0};
-int brightness = 100;
-bool brightness_increase = false;
-int readCounter = 0, buttonCounter = 0;
-int marker = 0;
+unsigned char currentDisplay[6] = {0, 0, 0, 0, 0, 0};
+unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
+unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
+unsigned char newTime[5] = {0, 0, 0, 0, 0};
+char brightness = 100;
+bool brightness_increase = false, editMode = false, blinkPartOff = false;
+char readCounter = 0, blinkCounter = 0;
+int buttonCounter = 0;
+char marker = 0;
 enum mode{Time, Date, Temp};
-int currentMode = Time;
+char currentMode = Time;
+char editIndex = 0;
 
 void my_delay(int miliseconds) {
 	int count = miliseconds / 10;
@@ -49,6 +54,9 @@ void getTime(bool ignoreMarker) {
 		marker++;
 		if (marker == 3) marker = 0;
 	}
+	currentTime[0] = hours & 0b111111;
+	currentTime[1] = minutes & 0b1111111;
+	currentTime[2] = seconds & 0b1111111;
 	currentDisplay[4] = (seconds & 0b01110000)>>4;
 	currentDisplay[5] = (seconds & 0b00001111);
 	currentDisplay[2] = (minutes & 0b01110000)>>4;
@@ -70,7 +78,7 @@ void getDate(bool ignoreMarker) {
 	char years = (currentDisplay[4] << 4) + currentDisplay[5];
 	if (ignoreMarker == true) {
 		days = GetMonthDay();
-		months = GetMonthDay();
+		months = GetMonth();
 		years = GetYear();
 		} else {
 		switch (marker) {
@@ -87,6 +95,10 @@ void getDate(bool ignoreMarker) {
 		marker++;
 		if (marker == 3) marker = 0;
 	}
+	currentDate[0] = months & 0b10000000;
+	currentDate[1] = years;
+	currentDate[2] = months & 0b11111;
+	currentDate[3] = days & 0b00111111;
 	currentDisplay[0] = (days & 0b00110000)>>4;
 	currentDisplay[1] = (days & 0b00001111) + 10;
 	currentDisplay[2] = (months & 0b00010000)>>4;
@@ -125,8 +137,33 @@ void getTemp(bool ignoreMarker) {
 	currentDisplay[5] = 23;
 }
 
+void displayEditMode() {
+	if (editIndex == 0 || editIndex == 1) {
+		currentDisplay[4] = 20;
+		currentDisplay[5] = 20;
+		currentDisplay[2] = (currentTime[1] & 0b01110000)>>4;
+		currentDisplay[3] = (currentTime[1] & 0b00001111);
+		currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
+		currentDisplay[1] = (currentTime[0] & 0b00001111);
+		
+	}
+	if (blinkPartOff) {
+		currentDisplay[0] = 20;
+		currentDisplay[1] = 20;
+	}
+	if (blinkCounter == 50) {
+		blinkCounter = 0;
+		blinkPartOff = !blinkPartOff;
+	}
+	blinkCounter++;
+}
+
 void getDataToDisplay() {
 	
+	if (editMode) {
+		displayEditMode();
+		return;
+	}
 	switch (currentMode) {
 		case Time:
 			getTime(false);
@@ -191,10 +228,17 @@ int main(void)
     {
         if (!(PINC & (1<<PINC2))) {
 			buttonCounter++;
-		} else if (buttonCounter > 20) {
+			if (buttonCounter > 500) {
+				editMode = true;
+				buttonCounter = 0;
+				getTime(true);
+				getDate(true);
+				turnOffSeparator();
+			}
+		} else if (buttonCounter > 20 && !editMode) {
 			toggleMode();
 			buttonCounter = 0;
-		}
+		} 
 		
 		if (readCounter == 5){
 // 			dimmer(brightness);

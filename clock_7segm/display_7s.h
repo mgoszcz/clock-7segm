@@ -20,7 +20,7 @@
 #define SEPARATOR_PIN PINC1
 #define SEPARATOR_DIR DDRC
 
-void display_time(unsigned int currentTime[]);
+void display_time(unsigned char currentTime[]);
 void my_delay_us(int microseconds);
 void dimmer(unsigned int brightness);
 void init();
