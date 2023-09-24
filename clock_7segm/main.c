@@ -12,14 +12,19 @@
 #include "display_7s.h"
 #include "RTC.h"
 
+const int monthDaysCount[12] = {
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
+const int century[2] = {2000, 2100};
+
 unsigned char currentDisplay[6] = {0, 0, 0, 0, 0, 0};
 unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
 unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
-unsigned char newTime[5] = {0, 0, 0, 0, 0};
 char brightness = 100;
-bool brightness_increase = false, editMode = false, blinkPartOff = false;
-char readCounter = 0, blinkCounter = 0;
-int buttonCounter = 0;
+bool brightness_increase = false, editMode = false, blinkerOff = false, editModeButtonBlocker = false;
+char mainCounter = 0, blinkCounter = 0;
+int buttonCounter1 = 0;
+int buttonCounter2 = 0;
 char marker = 0;
 enum mode{Time, Date, Temp};
 char currentMode = Time;
@@ -30,81 +35,73 @@ void my_delay(int miliseconds) {
 	for (uint8_t i=0; i<count; i++) _delay_ms(10);
 }
 
+
+bool isLeapYear() {
+	int year = century[currentDate[0]] + currentDate[1];
+	if (year%4 != 0) return false;
+	if (year%100 != 0) return true;
+	if (year%400 != 0) return false;
+	return true;
+}
+
 void getTime(bool ignoreMarker) {
-	char seconds = (currentDisplay[4] << 4) + currentDisplay[5];
-	char oldSeconds = seconds;
-	char minutes = (currentDisplay[2] << 4) + currentDisplay[3];
-	char hours = (currentDisplay[0] << 4) + currentDisplay[1];
+	char oldSeconds = currentTime[2];
 	if (ignoreMarker == true) {
-		seconds = GetSeconds();
-		minutes = GetMinutes();
-		hours = GetHours();
+		currentTime[2] = GetSeconds();
+		currentTime[1] = GetMinutes();
+		currentTime[0] = GetHours() & 0b111111;
 	} else {
 		switch (marker) {
 			case 0:
-			seconds = GetSeconds();
+			currentTime[2] = GetSeconds();
 			break;
 			case 1:
-			minutes = GetMinutes();
+			currentTime[1] = GetMinutes();
 			break;
 			case 2:
-			hours = GetHours();
+			currentTime[0] = GetHours() & 0b111111;
 			break;
 		}
 		marker++;
 		if (marker == 3) marker = 0;
 	}
-	currentTime[0] = hours & 0b111111;
-	currentTime[1] = minutes & 0b1111111;
-	currentTime[2] = seconds & 0b1111111;
-	currentDisplay[4] = (seconds & 0b01110000)>>4;
-	currentDisplay[5] = (seconds & 0b00001111);
-	currentDisplay[2] = (minutes & 0b01110000)>>4;
-	currentDisplay[3] = (minutes & 0b00001111);
-	currentDisplay[0] = (hours & 0b00110000)>>4;
-	currentDisplay[1] = (hours & 0b00001111);
-	if (oldSeconds != seconds) toggleSeparator();
+	currentDisplay[4] = (currentTime[2] & 0b01110000)>>4;
+	currentDisplay[5] = (currentTime[2] & 0b00001111);
+	currentDisplay[2] = (currentTime[1] & 0b01110000)>>4;
+	currentDisplay[3] = (currentTime[1] & 0b00001111);
+	currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
+	currentDisplay[1] = (currentTime[0] & 0b00001111);
+	if (oldSeconds != currentTime[2]) toggleSeparator();
 }
 
 void getDate(bool ignoreMarker) {
-	int du, mu;
-	du = currentDisplay[1];
-	mu = currentDisplay[3];
-	if (du > 10) du -= 10;
-	if (mu > 10) mu -= 10;
-
-	char days = (currentDisplay[0] << 4) + du;
-	char months = (currentDisplay[2] << 4) + mu;
-	char years = (currentDisplay[4] << 4) + currentDisplay[5];
 	if (ignoreMarker == true) {
-		days = GetMonthDay();
-		months = GetMonth();
-		years = GetYear();
+		currentDate[3] = GetMonthDay();
+		currentDate[2] = GetMonth() & 0b11111;
+		currentDate[1] = GetYear();
+		currentDate[0] = GetMonth() & 0b10000000;
 		} else {
 		switch (marker) {
 			case 0:
-			days = GetMonthDay();
+			currentDate[3] = GetMonthDay();
 			break;
 			case 1:
-			years = GetYear();
+			currentDate[2] = GetMonth() & 0b11111;
 			break;
 			case 2:
-			years = GetYear();
+			currentDate[1] = GetYear();
+			currentDate[0] = GetMonth() & 0b10000000;
 			break;
 		}
 		marker++;
 		if (marker == 3) marker = 0;
 	}
-	currentDate[0] = months & 0b10000000;
-	currentDate[1] = years;
-	currentDate[2] = months & 0b11111;
-	currentDate[3] = days & 0b00111111;
-	currentDisplay[0] = (days & 0b00110000)>>4;
-	currentDisplay[1] = (days & 0b00001111) + 10;
-	currentDisplay[2] = (months & 0b00010000)>>4;
-	currentDisplay[3] = (months & 0b00001111) + 10;
-	currentDisplay[4] = (years & 0b11110000)>>4;
-	currentDisplay[5] = (years & 0b00001111);
+	currentDisplay[0] = (currentDate[3] & 0b00110000)>>4;
+	currentDisplay[1] = (currentDate[3] & 0b00001111) + 10;
+	currentDisplay[2] = (currentDate[2] & 0b00010000)>>4;
+	currentDisplay[3] = (currentDate[2] & 0b00001111) + 10;
+	currentDisplay[4] = (currentDate[1] & 0b11110000)>>4;
+	currentDisplay[5] = (currentDate[1] & 0b00001111);
 }
 
 void getTemp(bool ignoreMarker) {
@@ -139,23 +136,81 @@ void getTemp(bool ignoreMarker) {
 
 void displayEditMode() {
 	if (editIndex == 0 || editIndex == 1) {
-		currentDisplay[4] = 20;
-		currentDisplay[5] = 20;
+		turnOnSeparator();
+		currentDisplay[4] = currentTime[2];
+		currentDisplay[5] = currentTime[2];
 		currentDisplay[2] = (currentTime[1] & 0b01110000)>>4;
 		currentDisplay[3] = (currentTime[1] & 0b00001111);
 		currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
 		currentDisplay[1] = (currentTime[0] & 0b00001111);
+		if (blinkerOff) {
+			currentDisplay[editIndex * 2] = 20;
+			currentDisplay[editIndex * 2 + 1] = 20;
+		}
 		
-	}
-	if (blinkPartOff) {
+	} else if (editIndex == 2) {
+		turnOffSeparator();
 		currentDisplay[0] = 20;
 		currentDisplay[1] = 20;
+		currentDisplay[2] = 0;
+		currentDisplay[3] = currentDate[0];
+		currentDisplay[4] = (currentDate[1] & 0b11110000)>>4;
+		currentDisplay[5] = (currentDate[1] & 0b00001111);
+		if (blinkerOff) {
+			currentDisplay[2] = 20;
+			currentDisplay[3] = 20;
+			currentDisplay[4] = 20;
+			currentDisplay[5] = 20;
+		}
+	} else if (editIndex == 3 || editIndex == 4) {
+		currentDisplay[0] = 20;
+		currentDisplay[1] = 20;
+		currentDisplay[2] = (currentDate[3] & 0b00110000)>>4;
+		currentDisplay[3] = (currentDate[3] & 0b00001111) + 10;
+		currentDisplay[4] = (currentDate[2] & 0b00010000)>>4;
+		currentDisplay[5] = (currentDate[2] & 0b00001111) + 10;
+		if (blinkerOff && editIndex == 3) {
+			currentDisplay[4] = 20;
+			currentDisplay[5] = 20;
+		}
+		if (blinkerOff && editIndex == 4) {
+			currentDisplay[2] = 20;
+			currentDisplay[3] = 20;
+		}
 	}
-	if (blinkCounter == 50) {
-		blinkCounter = 0;
-		blinkPartOff = !blinkPartOff;
+}
+
+void incrementCurrentIndex() {
+	switch (editIndex) {
+		case 0:
+			currentTime[0]++;
+			if (currentTime[0] == 24) currentTime[0] = 0;
+			break;
+		case 1:
+			currentTime[1]++;
+			if (currentTime[1] == 60) currentTime[1] = 0;
+			break;
+		case 2:
+			currentDate[1]++;
+			if (currentDate[1] == 100) {
+				if (currentDate[0] == 0) currentDate[0] = 1;
+				else currentDate[0] = 0;
+				currentDate[1] = 0;
+			}
+			break;
+		case 3:
+			currentDate[2]++;
+			if (currentDate[2] == 13) currentDate[2] = 1;
+			break;
+		case 4:
+			currentDate[3]++;
+			if (currentDate[3] > 28 && currentDate[2] == 2) {
+				if (isLeapYear() && currentDate[3] == 30) currentDate[3] = 1;
+				if (!isLeapYear()) currentDate[3] = 1;
+			}
+			if (currentDate[3] > monthDaysCount[currentDate[2]]) currentDate[3] = 1;
+			break;
 	}
-	blinkCounter++;
 }
 
 void getDataToDisplay() {
@@ -175,20 +230,6 @@ void getDataToDisplay() {
 			getTemp(false);
 			break;
 	}
-	
-// 	currentDisplay[4] = 0;
-// 	currentDisplay[5] = 0;
-// 	currentDisplay[2] = 20;
-// 	currentDisplay[3] = 20;
-// 	currentDisplay[0] = 20;
-// 	currentDisplay[1] = signCounter;
-// 	unsigned int num = signCounter, i=0;
-// 	while(num > 0) {
-//  		int mod  = num % 10;
-//  		num = num / 10;
-//  		currentDisplay[5-i] = mod;
-//  		i++;
-//  	}
 }
 
 void toggleMode() {
@@ -226,21 +267,43 @@ int main(void)
 	
 	while(1)
     {
-        if (!(PINC & (1<<PINC2))) {
-			buttonCounter++;
-			if (buttonCounter > 500) {
+		if (!(PINC & (1<<PINC2))) {
+			if (!editModeButtonBlocker) buttonCounter1++;
+			if (buttonCounter1 > 500 && ! editMode) {
 				editMode = true;
-				buttonCounter = 0;
+				buttonCounter1 = 0;
 				getTime(true);
 				getDate(true);
 				turnOffSeparator();
+				currentTime[2] = 0;
+				editModeButtonBlocker = true;
 			}
-		} else if (buttonCounter > 20 && !editMode) {
-			toggleMode();
-			buttonCounter = 0;
-		} 
+		} else {
+			 if (buttonCounter1 > 20 && !editMode) {
+				toggleMode();
+				buttonCounter1 = 0;
+			} else if (buttonCounter1 > 20 && editMode) {
+				editIndex++;
+				buttonCounter1 = 0;
+				if (editIndex == 5) 
+				{
+					editMode = false;
+					editIndex = 0;
+				}
+				// sendDataToRTC
+			}
+			editModeButtonBlocker = false;
+		 }
+		 if (!(PINC & (1<<PINC3)) && editMode) {
+			 buttonCounter2++;
+		 }
+		 if (buttonCounter2 > 50) {
+			 incrementCurrentIndex();
+			 buttonCounter2 = 0;
+			 blinkerOff = false;
+		 }
 		
-		if (readCounter == 5){
+		if (mainCounter%5 == 0){
 // 			dimmer(brightness);
 // 			if (brightness_increase == false) {
 // 				brightness--;			
@@ -249,10 +312,15 @@ int main(void)
 // 				brightness++;
 // 				if (brightness == 100) brightness_increase = false;
 // 			}
-			readCounter = 0;
 			getDataToDisplay();
-		} else {
-			readCounter++;
+		} 
+		mainCounter++;
+		blinkCounter++;
+		if (mainCounter == 255) mainCounter = 0;
+		if (blinkCounter == 100) 
+		{
+			blinkCounter = 0;
+			blinkerOff = !blinkerOff;
 		}
 		display_time(currentDisplay);
     }
