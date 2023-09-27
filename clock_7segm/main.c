@@ -13,7 +13,7 @@
 #include "RTC.h"
 
 const int monthDaysCount[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 const int century[2] = {2000, 2100};
 
@@ -22,7 +22,7 @@ unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
 unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
 char brightness = 100;
 bool brightness_increase = false, editMode = false, blinkerOff = false, editModeButtonBlocker = false;
-char mainCounter = 0, blinkCounter = 0;
+unsigned char mainCounter = 0, blinkCounter = 0;
 int buttonCounter1 = 0;
 int buttonCounter2 = 0;
 char marker = 0;
@@ -36,8 +36,22 @@ void my_delay(int miliseconds) {
 }
 
 
+unsigned char bcdToDec(unsigned char bcd) {
+	return (((bcd & 0xf0) >> 4) * 10) + (bcd &0xf);
+}
+
+unsigned char decToBcd(unsigned char dec) {
+	char decimals = dec/10;
+	char units = dec%10;
+	return (decimals<<4) + units;
+}
+
+unsigned char incrementBcd(unsigned char value) {
+	return decToBcd(bcdToDec(value) + 1);
+}
+
 bool isLeapYear() {
-	int year = century[currentDate[0]] + currentDate[1];
+	int year = 2000 + (century[currentDate[0]] * 100) + bcdToDec(currentDate[1]);
 	if (year%4 != 0) return false;
 	if (year%100 != 0) return true;
 	if (year%400 != 0) return false;
@@ -79,7 +93,7 @@ void getDate(bool ignoreMarker) {
 		currentDate[3] = GetMonthDay();
 		currentDate[2] = GetMonth() & 0b11111;
 		currentDate[1] = GetYear();
-		currentDate[0] = GetMonth() & 0b10000000;
+		currentDate[0] = GetMonth() & 0b10000000 >> 7;
 		} else {
 		switch (marker) {
 			case 0:
@@ -90,7 +104,7 @@ void getDate(bool ignoreMarker) {
 			break;
 			case 2:
 			currentDate[1] = GetYear();
-			currentDate[0] = GetMonth() & 0b10000000;
+			currentDate[0] = GetMonth() & 0b10000000 >> 7;
 			break;
 		}
 		marker++;
@@ -183,33 +197,30 @@ void displayEditMode() {
 void incrementCurrentIndex() {
 	switch (editIndex) {
 		case 0:
-			currentTime[0]++;
-			if (currentTime[0] == 24) currentTime[0] = 0;
-			break;
+		currentTime[0] = incrementBcd(currentTime[0]);
+		if (bcdToDec(currentTime[0]) == 24) currentTime[0] = 0;
+		break;
 		case 1:
-			currentTime[1]++;
-			if (currentTime[1] == 60) currentTime[1] = 0;
-			break;
+		currentTime[1] = incrementBcd(currentTime[1]);
+		if (bcdToDec(currentTime[1]) == 60) currentTime[1] = 0;
+		break;
 		case 2:
-			currentDate[1]++;
-			if (currentDate[1] == 100) {
-				if (currentDate[0] == 0) currentDate[0] = 1;
-				else currentDate[0] = 0;
-				currentDate[1] = 0;
-			}
-			break;
+		currentDate[1] = incrementBcd(currentDate[1]);
+		if (bcdToDec(currentDate[1]) == 100) {
+			if (currentDate[0] == 0) currentDate[0] = 1;
+			else currentDate[0] = 0;
+			currentDate[1] = 0;
+		}
+		break;
 		case 3:
-			currentDate[2]++;
-			if (currentDate[2] == 13) currentDate[2] = 1;
-			break;
+		currentDate[2] = incrementBcd(currentDate[2]);
+		if (bcdToDec(currentDate[2]) == 13) currentDate[2] = 1;
+		break;
 		case 4:
-			currentDate[3]++;
-			if (currentDate[3] > 28 && currentDate[2] == 2) {
-				if (isLeapYear() && currentDate[3] == 30) currentDate[3] = 1;
-				if (!isLeapYear()) currentDate[3] = 1;
-			}
-			if (currentDate[3] > monthDaysCount[currentDate[2]]) currentDate[3] = 1;
-			break;
+		currentDate[3] = incrementBcd(currentDate[3]);
+		if (bcdToDec(currentDate[3]) > 28 && bcdToDec(currentDate[2]) == 2 && !isLeapYear()) currentDate[3] = 1;
+		if (bcdToDec(currentDate[3]) > monthDaysCount[bcdToDec(currentDate[2]) - 1]) currentDate[3] = 1;
+		break;
 	}
 }
 
@@ -296,6 +307,7 @@ int main(void)
 		 }
 		 if (!(PINC & (1<<PINC3)) && editMode) {
 			 buttonCounter2++;
+			 blinkerOff = false;
 		 }
 		 if (buttonCounter2 > 50) {
 			 incrementCurrentIndex();
