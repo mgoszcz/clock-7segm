@@ -166,7 +166,7 @@ void displayEditMode() {
 		turnOffSeparator();
 		currentDisplay[0] = 20;
 		currentDisplay[1] = 20;
-		currentDisplay[2] = 0;
+		currentDisplay[2] = 2;
 		currentDisplay[3] = currentDate[0];
 		currentDisplay[4] = (currentDate[1] & 0b11110000)>>4;
 		currentDisplay[5] = (currentDate[1] & 0b00001111);
@@ -222,6 +222,15 @@ void incrementCurrentIndex() {
 		if (bcdToDec(currentDate[3]) > monthDaysCount[bcdToDec(currentDate[2]) - 1]) currentDate[3] = 1;
 		break;
 	}
+}
+
+void sendDataToRTC() {
+	SendHours(currentTime[0]);
+	SendMinutes(currentTime[1]);
+	SendSeconds(0);
+	SendMonthDay(currentDate[3]);
+	SendMonth((currentDate[0] << 7) + currentDate[2]);
+	SendYear(currentDate[1]);
 }
 
 void getDataToDisplay() {
@@ -300,8 +309,9 @@ int main(void)
 				{
 					editMode = false;
 					editIndex = 0;
+					sendDataToRTC();
 				}
-				// sendDataToRTC
+
 			}
 			editModeButtonBlocker = false;
 		 }
