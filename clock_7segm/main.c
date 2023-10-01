@@ -20,8 +20,7 @@ const int century[2] = {2000, 2100};
 unsigned char currentDisplay[6] = {0, 0, 0, 0, 0, 0};
 unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
 unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
-char brightness = 100;
-bool brightness_increase = false, editMode = false, blinkerOff = false, editModeButtonBlocker = false;
+bool editMode = false, blinkerOff = false, editModeButtonBlocker = false;
 unsigned char mainCounter = 0, blinkCounter = 0;
 int buttonCounter1 = 0;
 int buttonCounter2 = 0;
@@ -83,7 +82,11 @@ void getTime(bool ignoreMarker) {
 	currentDisplay[5] = (currentTime[2] & 0b00001111);
 	currentDisplay[2] = (currentTime[1] & 0b01110000)>>4;
 	currentDisplay[3] = (currentTime[1] & 0b00001111);
-	currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
+	if (((currentTime[0] & 0b00110000)>>4) == 0) {
+		currentDisplay[0] = 20;
+	} else {
+		currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
+	}
 	currentDisplay[1] = (currentTime[0] & 0b00001111);
 	if (oldSeconds != currentTime[2]) toggleSeparator();
 }
@@ -110,7 +113,11 @@ void getDate(bool ignoreMarker) {
 		marker++;
 		if (marker == 3) marker = 0;
 	}
-	currentDisplay[0] = (currentDate[3] & 0b00110000)>>4;
+	if (((currentDate[3] & 0b00110000)>>4) == 0) {
+		currentDisplay[0] = 20;
+		} else {
+		currentDisplay[0] = (currentDate[3] & 0b00110000)>>4;
+	}
 	currentDisplay[1] = (currentDate[3] & 0b00001111) + 10;
 	currentDisplay[2] = (currentDate[2] & 0b00010000)>>4;
 	currentDisplay[3] = (currentDate[2] & 0b00001111) + 10;
@@ -155,7 +162,11 @@ void displayEditMode() {
 		currentDisplay[5] = currentTime[2];
 		currentDisplay[2] = (currentTime[1] & 0b01110000)>>4;
 		currentDisplay[3] = (currentTime[1] & 0b00001111);
-		currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
+		if (((currentTime[0] & 0b00110000)>>4) == 0) {
+			currentDisplay[0] = 20;
+		} else {
+			currentDisplay[0] = (currentTime[0] & 0b00110000)>>4;
+		}
 		currentDisplay[1] = (currentTime[0] & 0b00001111);
 		if (blinkerOff) {
 			currentDisplay[editIndex * 2] = 20;
@@ -179,7 +190,11 @@ void displayEditMode() {
 	} else if (editIndex == 3 || editIndex == 4) {
 		currentDisplay[0] = 20;
 		currentDisplay[1] = 20;
-		currentDisplay[2] = (currentDate[3] & 0b00110000)>>4;
+		if (((currentDate[3] & 0b00110000)>>4) == 0) {
+			currentDisplay[2] = 20;
+		} else {
+			currentDisplay[2] = (currentDate[3] & 0b00110000)>>4;
+		}
 		currentDisplay[3] = (currentDate[3] & 0b00001111) + 10;
 		currentDisplay[4] = (currentDate[2] & 0b00010000)>>4;
 		currentDisplay[5] = (currentDate[2] & 0b00001111) + 10;
@@ -272,17 +287,41 @@ void toggleMode() {
 	}
 }
 
+char getBrigthness() {
+	ADCSRA |=(1<<ADSC);
+	char r = ADC / 10;
+	ADCSRA &= ~(1<<ADSC);
+	if (r > 100) r = 100;
+// 	currentDisplay[0] = 20;
+// 	currentDisplay[1] = 20;
+// 	currentDisplay[2] = 20;
+// 	currentDisplay[3] = 20;
+// 	currentDisplay[4] = 20;
+// 	currentDisplay[5] = 20;
+//  	char i = 0;
+//  	while(r > 0) {
+//  	 	char mod  = r % 10;
+//  	 	r = r / 10;
+//  	 	currentDisplay[5-i] = mod;
+//  	 	i++;
+//   	}
+ 	return r;
+}
+
 int main(void)
 {
     my_delay(500);
 	DDRC &= ~(1<<PINC3);
 	DDRC &= ~(1<<PINC2);
+	DDRC &= ~(1<<PINC0);
 	PORTC |= (1<<PINC3);
 	PORTC |= (1<<PINC2);
+	PORTC |= (1<<PINC0);
 	init();
 	Initialise_TWI_Master();
 	getTime(true);
-	// PORTC |= (1<<PINC1);
+	ADMUX |=(1<<REFS0);
+	ADCSRA |=(1<<ADEN)|(1<<ADFR)|(1<<ADPS0);
 
 	
 	while(1)
@@ -326,14 +365,7 @@ int main(void)
 		 }
 		
 		if (mainCounter%5 == 0){
-// 			dimmer(brightness);
-// 			if (brightness_increase == false) {
-// 				brightness--;			
-// 				if (brightness == 1) brightness_increase = true;
-// 			} else {
-// 				brightness++;
-// 				if (brightness == 100) brightness_increase = false;
-// 			}
+ 			dimmer(100 - getBrigthness());
 			getDataToDisplay();
 		} 
 		mainCounter++;

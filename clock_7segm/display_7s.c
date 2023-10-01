@@ -110,5 +110,7 @@ void display_time (unsigned char currentTime[]) {
 		SEPARATOR_PORT |= (1 << SEPARATOR_PIN); // high
 		my_delay_us(TIME_ON);
 		SEPARATOR_PORT &= ~(1 << SEPARATOR_PIN);  // low
+	} else {
+		my_delay_us(TIME_OFF + TIME_ON);
 	}
 }
