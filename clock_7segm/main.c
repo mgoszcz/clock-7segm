@@ -397,15 +397,15 @@ int main(void)
 		 if (!(PINC & (1<<PINC3))) {
 			 buttonCounter2++;
 			 blinkerOff = false;
+		 }  else if (buttonCounter2 > 50 && !editMode) {
+			 toggleRelaxMode();
+			 buttonCounter2 = 0;
 		 }
 		 if (buttonCounter2 > 50 && editMode) {
 			 incrementCurrentIndex();
 			 buttonCounter2 = 0;
 			 blinkerOff = false;
-		 } else if (buttonCounter2 > 50 && !editMode) {
-			 toggleRelaxMode();
-			 buttonCounter2 = 0;
-		 }
+		 } 
 		
 		if (mainCounter%5 == 0){
  			dimmer(100 - getBrigthness());
