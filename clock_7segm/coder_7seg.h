@@ -5,4 +5,4 @@
  *  Author: marci
  */ 
 
-char codeToDisplay(int code);
+unsigned char codeToDisplay(int code);

@@ -20,8 +20,8 @@ const int century[2] = {2000, 2100};
 unsigned char currentDisplay[6] = {0, 0, 0, 0, 0, 0};
 unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
 unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
-bool editMode = false, blinkerOff = false, editModeButtonBlocker = false;
-unsigned char mainCounter = 0, blinkCounter = 0;
+bool editMode = false, blinkerOff = false, editModeButtonBlocker = false, brightnessIncrease = true;
+unsigned char mainCounter = 0, blinkCounter = 0, relaxMode = 0, relaxModeBrightness = 0;
 int buttonCounter1 = 0;
 int buttonCounter2 = 0;
 char marker = 0;
@@ -248,11 +248,40 @@ void sendDataToRTC() {
 	SendYear(currentDate[1]);
 }
 
+void relaxMode1() {
+	if (relaxModeBrightness == 0) {
+		currentDisplay[0] = 20;
+		currentDisplay[1] = 20;
+		currentDisplay[2] = 20;
+		currentDisplay[3] = 20;
+		currentDisplay[4] = 20;
+		currentDisplay[5] = 20;
+		currentDisplay[rand() % 6] = rand() % 7 + 100;
+	}
+	if (brightnessIncrease) relaxModeBrightness++;
+	else relaxModeBrightness--;
+	if (relaxModeBrightness == 100) {
+		brightnessIncrease = false;
+	} else if (relaxModeBrightness == 0) {
+		brightnessIncrease = true;
+	}
+	dimmer(relaxModeBrightness);
+}
+
 void getDataToDisplay() {
 	
 	if (editMode) {
 		displayEditMode();
 		return;
+	}
+	if (relaxMode != 0) {
+		switch(relaxMode) {
+			case 1:
+				relaxMode1();
+				return;
+			case 2:
+				return;
+		}
 	}
 	switch (currentMode) {
 		case Time:
@@ -268,6 +297,10 @@ void getDataToDisplay() {
 }
 
 void toggleMode() {
+	if (relaxMode != 0) {
+		relaxMode = 0;
+		return;
+	}
 	if (currentMode == Temp) {
 		currentMode = Time;
 	} else {
@@ -285,6 +318,13 @@ void toggleMode() {
 		case Temp:
 			turnOffSeparator();
 	}
+}
+
+void toggleRelaxMode() {
+	turnOffSeparator();
+	relaxMode++;
+	relaxModeBrightness = 0;
+	if (relaxMode == 3) relaxMode = 1;
 }
 
 char getBrigthness() {
@@ -354,14 +394,17 @@ int main(void)
 			}
 			editModeButtonBlocker = false;
 		 }
-		 if (!(PINC & (1<<PINC3)) && editMode) {
+		 if (!(PINC & (1<<PINC3))) {
 			 buttonCounter2++;
 			 blinkerOff = false;
 		 }
-		 if (buttonCounter2 > 50) {
+		 if (buttonCounter2 > 50 && editMode) {
 			 incrementCurrentIndex();
 			 buttonCounter2 = 0;
 			 blinkerOff = false;
+		 } else if (buttonCounter2 > 50 && !editMode) {
+			 toggleRelaxMode();
+			 buttonCounter2 = 0;
 		 }
 		
 		if (mainCounter%5 == 0){

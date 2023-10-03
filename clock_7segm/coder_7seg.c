@@ -114,7 +114,24 @@
 -----------------------------
 |   62     |   -            |
 -----------------------------
-
+...
+-----------------------------
+|   100    |   segment A    |
+-----------------------------
+|   101    |   segment B    |
+-----------------------------
+|   102    |   segment C    |
+-----------------------------
+|   103    |   segment D    |
+-----------------------------
+|   104    |   segment E    |
+-----------------------------
+|   105    |   segment F    |
+-----------------------------
+|   106    |   segment G    |
+-----------------------------
+|   107    |   segment DP   |
+-----------------------------
 
  * 7 segment display segments:
 	A
@@ -132,17 +149,19 @@
 	0b00000000 - DP, G, F, E, D, C, B, A
  */ 
 
-const int digitsTable[10] = {
+const unsigned char digitsTable[10] = {
 	0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
 };
 
-const int lettersTable[15] = {
+const unsigned char lettersTable[15] = {
 	0b01110111, 0b01111100, 0b00111001, 0b01011110, 0b01111001, 0b01110001, 0b00111101, 0b01110100, 0b00111000, 0b01010100, 0b01011100, 0b01110011, 0b01010000, 0b01111000, 0b00011100
 };
 
-const int symbolsTable[3] = {0b01100011, 0b10000000, 0b01000000};
+const unsigned char symbolsTable[3] = {0b01100011, 0b10000000, 0b01000000};
+
+const unsigned char segmentsTable[8] = {0b1, 0b10, 0b100, 0b1000, 0b10000, 0b100000, 0b1000000, 0b10000000};
 	
-char codeToDisplay(int code) {
+unsigned char codeToDisplay(int code) {
 	switch (code / 10) {
 		case 0:
 			return digitsTable[code];
@@ -166,6 +185,8 @@ char codeToDisplay(int code) {
 			return lettersTable[code - 41] + symbolsTable[1];
 		case 6:
 			return symbolsTable[code - 60];
+		case 10:
+			return segmentsTable[code - 100];
 	}
 	return 0;
 }
