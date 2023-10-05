@@ -17,7 +17,7 @@ const int monthDaysCount[12] = {
 };
 const int century[2] = {2000, 2100};
 
-unsigned char currentDisplay[6] = {0, 0, 0, 0, 0, 0};
+unsigned char currentDisplay[6] = {20, 7, 20, 5, 20, 8};
 unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
 unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
 bool editMode = false, blinkerOff = false, editModeButtonBlocker = false, brightnessIncrease = true;
@@ -348,6 +348,7 @@ char getBrigthness() {
  	return r;
 }
 
+
 int main(void)
 {
     my_delay(500);
@@ -362,13 +363,13 @@ int main(void)
 	getTime(true);
 	ADMUX |=(1<<REFS0);
 	ADCSRA |=(1<<ADEN)|(1<<ADFR)|(1<<ADPS0);
-
+	
 	
 	while(1)
     {
 		if (!(PINC & (1<<PINC2))) {
 			if (!editModeButtonBlocker) buttonCounter1++;
-			if (buttonCounter1 > 500 && ! editMode) {
+			if (buttonCounter1 > 250 && ! editMode) {
 				editMode = true;
 				buttonCounter1 = 0;
 				getTime(true);
@@ -378,10 +379,10 @@ int main(void)
 				editModeButtonBlocker = true;
 			}
 		} else {
-			 if (buttonCounter1 > 20 && !editMode) {
+			 if (buttonCounter1 > 10 && !editMode) {
 				toggleMode();
 				buttonCounter1 = 0;
-			} else if (buttonCounter1 > 20 && editMode) {
+			} else if (buttonCounter1 > 10 && editMode) {
 				editIndex++;
 				buttonCounter1 = 0;
 				if (editIndex == 5) 
@@ -407,18 +408,19 @@ int main(void)
 			 blinkerOff = false;
 		 } 
 		
-		if (mainCounter%5 == 0){
+		if (mainCounter%3 == 0){
  			dimmer(100 - getBrigthness());
 			getDataToDisplay();
 		} 
 		mainCounter++;
 		blinkCounter++;
 		if (mainCounter == 255) mainCounter = 0;
-		if (blinkCounter == 100) 
+		if (blinkCounter == 50) 
 		{
 			blinkCounter = 0;
 			blinkerOff = !blinkerOff;
 		}
 		display_time(currentDisplay);
+		// test();
     }
 }

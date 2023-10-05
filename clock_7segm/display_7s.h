@@ -27,3 +27,4 @@ void init();
 void turnOnSeparator();
 void turnOffSeparator();
 void toggleSeparator();
+void test();

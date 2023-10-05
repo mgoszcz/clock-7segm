@@ -4,6 +4,7 @@
  * Created: 12.09.2023 21:50:27
  *  Author: marci
  */ 
+#define F_CPU 4000000
 #include <util/delay.h>
 #include <stdbool.h>
 #include "display_7s.h"
@@ -13,8 +14,8 @@ unsigned int TIME_OFF, TIME_ON;
 bool separator_on = false;
 
 void init() {
-	TIME_OFF = 2500;
-	TIME_ON = 500;
+	TIME_OFF = 1900;
+	TIME_ON = 100;
 	SEPARATOR_DIR |= (1<<SEPARATOR_PIN);
 }
 	
@@ -30,9 +31,9 @@ void my_delay_us(int microseconds) {
 }
 
 void dimmer(unsigned int brightness) {
-	TIME_ON = 30 * brightness / 100;
+	TIME_ON = 20 * brightness / 100;
 	TIME_ON = TIME_ON * 100;
-	TIME_OFF = 3000 - TIME_ON;
+	TIME_OFF = 2000 - TIME_ON;
 }
 
 void turnOnSeparator() {
@@ -64,7 +65,7 @@ void display_time (unsigned char currentTime[]) {
 	// temporary end
 	LED_DATA_PORT = codeToDisplay(currentTime[0]);
 	my_delay_us(TIME_OFF);
-	LED_CONTROL_PORT |= (1 << HD); // high
+	if (codeToDisplay(currentTime[0]) != 0) LED_CONTROL_PORT |= (1 << HD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HD);  // low
 	_delay_us(10);
@@ -72,35 +73,35 @@ void display_time (unsigned char currentTime[]) {
 	
 	LED_DATA_PORT = codeToDisplay(currentTime[1]);
 	my_delay_us(TIME_OFF);
-	LED_CONTROL_PORT |= (1 << HU); // high
+	if (codeToDisplay(currentTime[1]) != 0) LED_CONTROL_PORT |= (1 << HU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << HU);  // low
 	_delay_us(10);
 	
 	LED_DATA_PORT = codeToDisplay(currentTime[2]);
 	my_delay_us(TIME_OFF);
-	LED_CONTROL_PORT |= (1 << MD); // high
+	if (codeToDisplay(currentTime[2]) != 0) LED_CONTROL_PORT |= (1 << MD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MD);  // low
 	_delay_us(10);
 	
 	LED_DATA_PORT = codeToDisplay(currentTime[3]);
 	my_delay_us(TIME_OFF);
-	LED_CONTROL_PORT |= (1 << MU); // high
+	if (codeToDisplay(currentTime[3]) != 0) LED_CONTROL_PORT |= (1 << MU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << MU);  // low
 	_delay_us(10);
 	
 	LED_DATA_PORT = codeToDisplay(currentTime[4]);
 	my_delay_us(TIME_OFF);
-	LED_CONTROL_PORT |= (1 << SD); // high
+	if (codeToDisplay(currentTime[4]) != 0) LED_CONTROL_PORT |= (1 << SD); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SD);  // low
 	_delay_us(10);
 	
 	LED_DATA_PORT = codeToDisplay(currentTime[5]);
 	my_delay_us(TIME_OFF);
-	LED_CONTROL_PORT |= (1 << SU); // high
+	if (codeToDisplay(currentTime[5]) != 0) LED_CONTROL_PORT |= (1 << SU); // high
 	my_delay_us(TIME_ON);
 	LED_CONTROL_PORT &= ~(1 << SU);  // low
 	_delay_us(10);
@@ -113,4 +114,12 @@ void display_time (unsigned char currentTime[]) {
 	} else {
 		my_delay_us(TIME_OFF + TIME_ON);
 	}
+}
+
+void test() {
+	LED_DATA_PORT = 0b01111111;
+	LED_CONTROL_PORT |= (1 << HU);
+	my_delay_us(TIME_ON);
+	LED_CONTROL_PORT &= ~(1 << HU);  // low
+	my_delay_us(TIME_OFF);
 }
