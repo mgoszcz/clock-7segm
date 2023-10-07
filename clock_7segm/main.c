@@ -11,6 +11,7 @@
 
 #include "display_7s.h"
 #include "RTC.h"
+#include "snake_seven_seg.h"
 
 const int monthDaysCount[12] = {
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -398,7 +399,7 @@ int main(void)
 		 if (!(PINC & (1<<PINC3))) {
 			 buttonCounter2++;
 			 blinkerOff = false;
-		 }  else if (buttonCounter2 > 50 && !editMode) {
+		 }  else if (buttonCounter2 > 10 && !editMode) {
 			 toggleRelaxMode();
 			 buttonCounter2 = 0;
 		 }
@@ -410,17 +411,17 @@ int main(void)
 		
 		if (mainCounter%3 == 0){
  			dimmer(100 - getBrigthness());
-			getDataToDisplay();
+			if (relaxMode != 2)	getDataToDisplay();
 		} 
 		mainCounter++;
 		blinkCounter++;
-		if (mainCounter == 255) mainCounter = 0;
+		if (mainCounter == 251) mainCounter = 0;
 		if (blinkCounter == 50) 
 		{
 			blinkCounter = 0;
 			blinkerOff = !blinkerOff;
 		}
-		display_time(currentDisplay);
-		// test();
+		if (relaxMode != 2) display_time(currentDisplay);
+		else displaySnake(mainCounter);
     }
 }

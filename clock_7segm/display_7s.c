@@ -116,10 +116,16 @@ void display_time (unsigned char currentTime[]) {
 	}
 }
 
-void test() {
-	LED_DATA_PORT = 0b01111111;
-	LED_CONTROL_PORT |= (1 << HU);
-	my_delay_us(TIME_ON);
-	LED_CONTROL_PORT &= ~(1 << HU);  // low
-	my_delay_us(TIME_OFF);
+// Display specific segment on specific display with specific brightness
+// Display number [0-5], segmentCode [100-107], brightness [0-100]
+void displaySegment(unsigned char displayNumber, unsigned char segmentCode, unsigned char brightness) {
+	int time_on = (20 * brightness / 100) * 100;
+	int time_off = 2000 - time_on;
+	LED_DATA_PORT = codeToDisplay(segmentCode);
+	my_delay_us(time_off);
+	if (codeToDisplay(segmentCode) != 0) LED_CONTROL_PORT |= (1 << displayNumber); // high
+	my_delay_us(time_on);
+	LED_CONTROL_PORT &= ~(1 << displayNumber);  // low
+	_delay_us(10);
+	LED_DATA_PORT = 0;
 }

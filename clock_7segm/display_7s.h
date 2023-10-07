@@ -27,4 +27,4 @@ void init();
 void turnOnSeparator();
 void turnOffSeparator();
 void toggleSeparator();
-void test();
+void displaySegment(unsigned char displayNumber, unsigned char segmentCode, unsigned char brightness);

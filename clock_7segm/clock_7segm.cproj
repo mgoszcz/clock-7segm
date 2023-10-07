@@ -112,6 +112,12 @@
     <Compile Include="RTC.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="snake_seven_seg.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="snake_seven_seg.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="TWI_Master.c">
       <SubType>compile</SubType>
     </Compile>
