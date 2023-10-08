@@ -75,9 +75,10 @@ extern union TWI_statusReg TWI_statusReg;
 void TWI_Master_Initialise( void );
 unsigned char TWI_Transceiver_Busy( void );
 unsigned char TWI_Get_State_Info( void );
-void TWI_Start_Transceiver_With_Data( unsigned char * , unsigned char );
-void TWI_Start_Transceiver( void );
+unsigned char TWI_Start_Transceiver_With_Data( unsigned char * , unsigned char );
+unsigned char TWI_Start_Transceiver( void );
 unsigned char TWI_Get_Data_From_Transceiver( unsigned char *, unsigned char );
+unsigned char WaitForTransceiverNotBusy(void);
 
 /****************************************************************************
   Bit and byte definitions

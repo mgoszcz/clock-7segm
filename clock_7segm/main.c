@@ -58,6 +58,11 @@ bool isLeapYear() {
 	return true;
 }
 
+void displayError(unsigned char errornumber) {
+	unsigned char displayError[6] = {25, 33, 33, 20, 0, errornumber};
+	while(1) display_time(displayError);
+}
+
 void getTime(bool ignoreMarker) {
 	char oldSeconds = currentTime[2];
 	if (ignoreMarker == true) {
@@ -79,6 +84,7 @@ void getTime(bool ignoreMarker) {
 		marker++;
 		if (marker == 3) marker = 0;
 	}
+	if (currentTime[0] == 0x3f || currentTime[1] == 0xff || currentTime[2] == 0xff) displayError((unsigned char)1);
 	currentDisplay[4] = (currentTime[2] & 0b01110000)>>4;
 	currentDisplay[5] = (currentTime[2] & 0b00001111);
 	currentDisplay[2] = (currentTime[1] & 0b01110000)>>4;
@@ -119,6 +125,7 @@ void getDate(bool ignoreMarker) {
 		} else {
 		currentDisplay[0] = (currentDate[3] & 0b00110000)>>4;
 	}
+	if (currentDate[2] == 0x1f || currentDate[3] == 0xff) displayError((unsigned char)1);
 	currentDisplay[1] = (currentDate[3] & 0b00001111) + 10;
 	currentDisplay[2] = (currentDate[2] & 0b00010000)>>4;
 	currentDisplay[3] = (currentDate[2] & 0b00001111) + 10;
@@ -129,6 +136,7 @@ void getDate(bool ignoreMarker) {
 void getTemp(bool ignoreMarker) {
 	int temp_upper = (int)GetTempUpper();
 	int temp_lower = (int)GetTempLower();
+	if (temp_upper == 255 || temp_lower == 255) displayError((unsigned char)1);
 	bool negative = false;
 	if (temp_upper & 0x80) negative = true;
 	temp_upper &= 0x7f;
@@ -241,12 +249,12 @@ void incrementCurrentIndex() {
 }
 
 void sendDataToRTC() {
-	SendHours(currentTime[0]);
-	SendMinutes(currentTime[1]);
-	SendSeconds(0);
-	SendMonthDay(currentDate[3]);
-	SendMonth((currentDate[0] << 7) + currentDate[2]);
-	SendYear(currentDate[1]);
+	if (SendHours(currentTime[0]) != 0) displayError((unsigned char)2);
+	if (SendMinutes(currentTime[1]) != 0) displayError((unsigned char)2);
+	if (SendSeconds(0) != 0) displayError((unsigned char)2);
+	if (SendMonthDay(currentDate[3]) != 0) displayError((unsigned char)2);
+	if (SendMonth((currentDate[0] << 7) + currentDate[2]) != 0) displayError((unsigned char)2);
+	if (SendYear(currentDate[1]) != 0) displayError((unsigned char)2);
 }
 
 void relaxMode1() {
@@ -348,6 +356,7 @@ char getBrigthness() {
 //   	}
  	return r;
 }
+
 
 
 int main(void)

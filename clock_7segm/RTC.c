@@ -17,89 +17,94 @@ void Initialise_TWI_Master(void) {
 	sei();
 }
 
-char RTCRead(char addr) {
-	unsigned char messageBuf[4];
+unsigned char RTCRead(char addr) {
+	unsigned char messageBuf[4], response;
 	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (FALSE<<TWI_READ_BIT); // The first byte must always consists of General Call code or the TWI slave address.
 	messageBuf[1] = addr;             // Send register address
-	TWI_Start_Transceiver_With_Data( messageBuf, 2 );
+	response = TWI_Start_Transceiver_With_Data( messageBuf, 2 );
+	if (response != 0 ) return response;
 	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (TRUE<<TWI_READ_BIT); // The first byte must always consists of General Call code or the TWI slave address.
-	TWI_Start_Transceiver_With_Data( messageBuf, 2 );
+	response = TWI_Start_Transceiver_With_Data( messageBuf, 2 );
+	if (response != 0 ) return response;
 	TWI_Get_Data_From_Transceiver(messageBuf, 2);
+	//if (response != 0 ) return response;
 	return messageBuf[1];
 }
 
-void RTCWrite(char addr, char value) {
-	unsigned char messageBuf[3];
+char RTCWrite(char addr, char value) {
+	unsigned char messageBuf[3], response;
 	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (FALSE<<TWI_READ_BIT); // The first byte must always consists of General Call code or the TWI slave address.
 	messageBuf[1] = addr;             // Register address
 	messageBuf[2] = value; // data to send
-	TWI_Start_Transceiver_With_Data( messageBuf, 3 );
+	response = TWI_Start_Transceiver_With_Data( messageBuf, 3 );
+	if (response != 0 ) return response;
+	return 0;
 }
 
-char GetSeconds(void) {
+unsigned char GetSeconds(void) {
 	
 	char RTCseconds = RTCRead(SECONDS_REGISTER_ADDR);
 	return RTCseconds;
 }
 
-char GetMinutes(void) {
+unsigned char GetMinutes(void) {
 	char RTCminutes = RTCRead(MINUTES_REGISTER_ADDR);
 	return RTCminutes;
 }
 
-char GetHours(void) {
+unsigned char GetHours(void) {
 	char RTChours = RTCRead(HOURS_REGISTER_ADDR);
 	return RTChours;
 }
 
-char GetWeekDay(void) {
+unsigned char GetWeekDay(void) {
 	return RTCRead(WEEKDAYS_REGISTER_ADDR);
 }
 
-char GetMonthDay(void) {
+unsigned char GetMonthDay(void) {
 	return RTCRead(MONTHDAYS_REGISTER_ADDR);
 }
 
-char GetMonth(void) {
+unsigned char GetMonth(void) {
 	return RTCRead(MONTHS_REGISTER_ADDR);
 }
 
-char GetYear(void) {
+unsigned char GetYear(void) {
 	return RTCRead(YEARS_REGISTER_ADDR);
 }
 
-char GetTempUpper(void) {
+unsigned char GetTempUpper(void) {
 	return RTCRead(TEMP_REGISTER_UPPER_ADDR);
 }
 
-char GetTempLower(void) {
+unsigned char GetTempLower(void) {
 	return RTCRead(TEMP_REGISTER_LOWER_ADDR);
 }
 
-void SendHours(char value) {
-	RTCWrite(HOURS_REGISTER_ADDR, value);
+char SendHours(char value) {
+	return RTCWrite(HOURS_REGISTER_ADDR, value);
 }
 
-void SendMinutes(char value) {
-	RTCWrite(MINUTES_REGISTER_ADDR, value);
+char SendMinutes(char value) {
+	return RTCWrite(MINUTES_REGISTER_ADDR, value);
 }
 
-void SendSeconds(char value) {
-	RTCWrite(SECONDS_REGISTER_ADDR, value);
+char SendSeconds(char value) {
+	return RTCWrite(SECONDS_REGISTER_ADDR, value);
 }
 
-void SendWeekDay(char value) {
-	RTCWrite(WEEKDAYS_REGISTER_ADDR, value);
+char SendWeekDay(char value) {
+	return RTCWrite(WEEKDAYS_REGISTER_ADDR, value);
 }
 
-void SendMonthDay(char value) {
-	RTCWrite(MONTHDAYS_REGISTER_ADDR, value);
+char SendMonthDay(char value) {
+	return RTCWrite(MONTHDAYS_REGISTER_ADDR, value);
 }
 
-void SendMonth(char value) {
-	RTCWrite(MONTHS_REGISTER_ADDR, value);
+char SendMonth(char value) {
+	return RTCWrite(MONTHS_REGISTER_ADDR, value);
 }
 
-void SendYear(char value) {
-	RTCWrite(YEARS_REGISTER_ADDR, value);
+char SendYear(char value) {
+	return RTCWrite(YEARS_REGISTER_ADDR, value);
 }

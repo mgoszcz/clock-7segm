@@ -19,19 +19,19 @@
 #define TWI_targetSlaveAddress 0x68
 
 void Initialise_TWI_Master(void);
-char GetSeconds(void);
-char GetMinutes(void);
-char GetHours(void);
-char GetWeekDay(void);
-char GetMonthDay(void);
-char GetMonth(void);
-char GetYear(void);
-char GetTempUpper(void);
-char GetTempLower(void);
-void SendHours(char value);
-void SendMinutes(char value);
-void SendSeconds(char value);
-void SendWeekDay(char value);
-void SendMonthDay(char value);
-void SendMonth(char value);
-void SendYear(char value);
+unsigned char GetSeconds(void);
+unsigned char GetMinutes(void);
+unsigned char GetHours(void);
+unsigned char GetWeekDay(void);
+unsigned char GetMonthDay(void);
+unsigned char GetMonth(void);
+unsigned char GetYear(void);
+unsigned char GetTempUpper(void);
+unsigned char GetTempLower(void);
+char SendHours(char value);
+char SendMinutes(char value);
+char SendSeconds(char value);
+char SendWeekDay(char value);
+char SendMonthDay(char value);
+char SendMonth(char value);
+char SendYear(char value);

@@ -43,7 +43,8 @@
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
-
+#define F_CPU 4000000
+#include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "TWI_Master.h"
@@ -76,6 +77,17 @@ unsigned char TWI_Transceiver_Busy( void )
   return ( TWCR & (1<<TWIE) );                  // IF TWI Interrupt is enabled then the Transceiver is busy
 }
 
+unsigned char WaitForTransceiverNotBusy(void) {
+	unsigned char timeout = 0;
+	while (TWI_Transceiver_Busy() && (timeout < 255))
+	{
+		_delay_us(100);
+		timeout++;
+	}
+	if (timeout == 255) return 1;
+	else return 0;
+}
+
 /****************************************************************************
 Call this function to fetch the state information of the previous operation. The function will hold execution (loop)
 until the TWI_ISR has completed with the previous operation. If there was an error, then the function 
@@ -83,7 +95,8 @@ will return the TWI State code.
 ****************************************************************************/
 unsigned char TWI_Get_State_Info( void )
 {
-  while ( TWI_Transceiver_Busy() );             // Wait until TWI has completed the transmission.
+  if (WaitForTransceiverNotBusy() == 1) return 1;             // Wait until TWI has completed the transmission.
+  //WaitForTransceiverNotBusy();
   return ( TWI_state );                         // Return error state.
 }
 
@@ -94,11 +107,12 @@ from the slave. Also include how many bytes that should be sent/read including t
 The function will hold execution (loop) until the TWI_ISR has completed with the previous operation,
 then initialize the next operation and return.
 ****************************************************************************/
-void TWI_Start_Transceiver_With_Data( unsigned char *msg, unsigned char msgSize )
+unsigned char TWI_Start_Transceiver_With_Data( unsigned char *msg, unsigned char msgSize )
 {
   unsigned char temp;
 
-  while ( TWI_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+  if (WaitForTransceiverNotBusy() == 1) return 255;             // Wait until TWI is ready for next transmission.
+	//WaitForTransceiverNotBusy();
 
   TWI_msgSize = msgSize;                        // Number of data to transmit.
   TWI_buf[0]  = msg[0];                         // Store slave address with R/W setting.
@@ -113,6 +127,7 @@ void TWI_Start_Transceiver_With_Data( unsigned char *msg, unsigned char msgSize 
          (1<<TWIE)|(1<<TWINT)|                  // Enable TWI Interrupt and clear the flag.
          (0<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|       // Initiate a START condition.
          (0<<TWWC);                             //
+	return 0;
 }
 
 /****************************************************************************
@@ -120,15 +135,17 @@ Call this function to resend the last message. The driver will reuse the data pr
 The function will hold execution (loop) until the TWI_ISR has completed with the previous operation,
 then initialize the next operation and return.
 ****************************************************************************/
-void TWI_Start_Transceiver( void )
+unsigned char TWI_Start_Transceiver( void )
 {
-  while ( TWI_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+  if (WaitForTransceiverNotBusy() == 1) return 255;             // Wait until TWI is ready for next transmission.
+  //WaitForTransceiverNotBusy();
   TWI_statusReg.all = 0;      
   TWI_state         = TWI_NO_STATE ;
   TWCR = (1<<TWEN)|                             // TWI Interface enabled.
          (1<<TWIE)|(1<<TWINT)|                  // Enable TWI Interrupt and clear the flag.
          (0<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|       // Initiate a START condition.
          (0<<TWWC);                             //
+	return 0;
 }
 
 /****************************************************************************
@@ -143,8 +160,9 @@ unsigned char TWI_Get_Data_From_Transceiver( unsigned char *msg, unsigned char m
 {
   unsigned char i;
 
-  while ( TWI_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+  if (WaitForTransceiverNotBusy() == 1) return 255;             // Wait until TWI is ready for next transmission.
 
+  //WaitForTransceiverNotBusy();
   if( TWI_statusReg.lastTransOK )               // Last transmission competed successfully.              
   {                                             
     for ( i=0; i<msgSize; i++ )                 // Copy data from Transceiver buffer.
