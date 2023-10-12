@@ -23,7 +23,7 @@
 void display_time(unsigned char currentTime[]);
 void my_delay_us(int microseconds);
 void dimmer(unsigned int brightness);
-void init();
+void displayInit();
 void turnOnSeparator();
 void turnOffSeparator();
 void toggleSeparator();

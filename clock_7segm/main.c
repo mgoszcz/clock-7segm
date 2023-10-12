@@ -23,8 +23,8 @@ unsigned char currentTime[3] = {0, 0, 0}; // HOURS, MINUTES, SECONDS
 unsigned char currentDate[4] = {0, 0, 0, 0}; // CENTURY, YEAR, MONTH, DAY
 bool editMode = false, blinkerOff = false, editModeButtonBlocker = false, brightnessIncrease = true;
 unsigned char mainCounter = 0, blinkCounter = 0, relaxMode = 0, relaxModeBrightness = 0;
-int buttonCounter1 = 0;
-int buttonCounter2 = 0;
+int buttonCounter1 = 0, buttonCounter2 = 0, editModeCounter = 0;
+unsigned char bothButtonsPressedCounter = 0;
 char marker = 0;
 enum mode{Time, Date, Temp};
 char currentMode = Time;
@@ -134,32 +134,29 @@ void getDate(bool ignoreMarker) {
 }
 
 void getTemp(bool ignoreMarker) {
-	int temp_upper = (int)GetTempUpper();
-	int temp_lower = (int)GetTempLower();
+	unsigned char temp_upper = GetTempUpper();
+	unsigned char temp_lower = GetTempLower();
 	if (temp_upper == 255 || temp_lower == 255) displayError((unsigned char)1);
 	bool negative = false;
 	if (temp_upper & 0x80) negative = true;
 	temp_upper &= 0x7f;
-	float temp = ((temp_upper << 8) + temp_lower) / 256.;
-	int whole = (int)temp;
-	float fractional_part = temp - whole;
-	int fractional_int = (int)(fractional_part * 100);
-	if (fractional_int == 0 || fractional_int == 25) fractional_int = 0;
-	if (fractional_int == 50 || fractional_int == 75) fractional_int = 5;
+	unsigned char fractional_part;
+	if (temp_lower >> 6 > 1) fractional_part = 5;
+	else fractional_part = 0;
 	if (negative) {
 		currentDisplay[0] = 62;
 	} else {
 		currentDisplay[0] = 20;
 	}
-	int secondDigit = whole % 10;
-	int firstDigit = (whole / 10) % 10;
+	int secondDigit = temp_upper % 10;
+	int firstDigit = (temp_upper / 10) % 10;
 	if (firstDigit > 0) {
 		currentDisplay[1] = firstDigit;
 	} else {
 		currentDisplay[1] = 20;	
 	}
 	currentDisplay[2] = secondDigit + 10;
-	currentDisplay[3] = fractional_int;
+	currentDisplay[3] = fractional_part;
 	currentDisplay[4] = 60;
 	currentDisplay[5] = 23;
 }
@@ -281,6 +278,7 @@ void getDataToDisplay() {
 	
 	if (editMode) {
 		displayEditMode();
+		editModeCounter++;
 		return;
 	}
 	if (relaxMode != 0) {
@@ -341,20 +339,13 @@ char getBrigthness() {
 	char r = ADC / 10;
 	ADCSRA &= ~(1<<ADSC);
 	if (r > 100) r = 100;
-// 	currentDisplay[0] = 20;
-// 	currentDisplay[1] = 20;
-// 	currentDisplay[2] = 20;
-// 	currentDisplay[3] = 20;
-// 	currentDisplay[4] = 20;
-// 	currentDisplay[5] = 20;
-//  	char i = 0;
-//  	while(r > 0) {
-//  	 	char mod  = r % 10;
-//  	 	r = r / 10;
-//  	 	currentDisplay[5-i] = mod;
-//  	 	i++;
-//   	}
  	return r;
+}
+
+void debugDisplay() {
+	unsigned char dbgDisp[6] = {18, 18, 18, 18, 18, 18};
+	turnOnSeparator();
+	while (1) display_time(dbgDisp);
 }
 
 
@@ -368,7 +359,7 @@ int main(void)
 	PORTC |= (1<<PINC3);
 	PORTC |= (1<<PINC2);
 	PORTC |= (1<<PINC0);
-	init();
+	displayInit();
 	Initialise_TWI_Master();
 	getTime(true);
 	ADMUX |=(1<<REFS0);
@@ -377,9 +368,9 @@ int main(void)
 	
 	while(1)
     {
-		if (!(PINC & (1<<PINC2))) {
+		if (!(PINC & (1<<PINC2)) && (PINC & (1<<PINC3))) {
 			if (!editModeButtonBlocker) buttonCounter1++;
-			if (buttonCounter1 > 250 && ! editMode) {
+			if (buttonCounter1 > 125 && ! editMode) {
 				editMode = true;
 				buttonCounter1 = 0;
 				getTime(true);
@@ -400,23 +391,39 @@ int main(void)
 					editMode = false;
 					editIndex = 0;
 					sendDataToRTC();
+					buttonCounter2 = 0;
+					buttonCounter1 = 0;
 				}
 
 			}
 			editModeButtonBlocker = false;
 		 }
-		 if (!(PINC & (1<<PINC3))) {
+		 if (!(PINC & (1<<PINC3)) && (PINC & (1<<PINC2))) {
 			 buttonCounter2++;
 			 blinkerOff = false;
 		 }  else if (buttonCounter2 > 10 && !editMode) {
 			 toggleRelaxMode();
 			 buttonCounter2 = 0;
 		 }
-		 if (buttonCounter2 > 50 && editMode) {
+		 if (buttonCounter2 > 30 && editMode) {
 			 incrementCurrentIndex();
 			 buttonCounter2 = 0;
 			 blinkerOff = false;
+			 editModeCounter = 0;
 		 } 
+		
+		if (!(PINC & (1<<PINC3)) && !(PINC & (1<<PINC2))) {
+			bothButtonsPressedCounter++;
+			if (bothButtonsPressedCounter > 254) debugDisplay();
+		} else {
+			bothButtonsPressedCounter = 0;
+		}
+		if (editModeCounter > 1500) {
+			editModeCounter = 0;
+			editMode = false;
+			buttonCounter2 = 0;
+			buttonCounter1 = 0;
+		}
 		
 		if (mainCounter%3 == 0){
  			dimmer(100 - getBrigthness());

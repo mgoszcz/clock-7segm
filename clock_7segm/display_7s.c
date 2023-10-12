@@ -13,7 +13,7 @@
 unsigned int TIME_OFF, TIME_ON;
 bool separator_on = false;
 
-void init() {
+void displayInit() {
 	TIME_OFF = 1900;
 	TIME_ON = 100;
 	SEPARATOR_DIR |= (1<<SEPARATOR_PIN);
